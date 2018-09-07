@@ -106,6 +106,7 @@ nullToNA = function(df) {
 # Main function -----------------------------------------------------------
 
 #' Retrieve regulations.gov documents
+#'
 #' @param apikey Access key for accessing the regulations.gov API.
 #' Get one at https://regulationsgov.github.io/developers/key/.
 #' @param countsOnly 1 (will return only the document count for a search query) 0 (will return documents as well)
@@ -165,11 +166,15 @@ nullToNA = function(df) {
 #' @param docketSubSubtype Docket Sub-subtype: Only one docket sub-subtype at
 #' a time may be selected. One or more agency values must be part of the
 #' request. Only values valid for the selected agency will be returned.
-#' @param Document Subtype: Single or multiple document subtypes may be
+#' @param documentSubtype: Single or multiple document subtypes may be
 #' included.  Multiple values should be passed as follows:
 #' Certificate+of+Service%2BCorrespondence
-#' @details A Docket Type is either Rulemaking or Nonrulemaking. A Rulemaking docket includes the type of regulation that establishes a rule.
+#'
+#' @details
+#' A Docket Type is either Rulemaking or Nonrulemaking. A Rulemaking docket
+#' includes the type of regulation that establishes a rule.
 #' While a Non-Rulemaking docket does not include a rule.
+#'
 #' @importFrom assertthat assert_that
 #' @importFrom httr GET timeout
 #' @export
@@ -194,7 +199,7 @@ documents <- function (apikey = NULL, countsOnly = NULL, encoded = NULL,
   if(!is.null(docType))
     assert_that(all(docType %in%  c("N", "PR", "FR", "O", "SR", "PS")))
   if (!is.null(docketType))
-    assert_that(docketType) %in% c("R", "N")
+    assert_that(docketType %in% c("R", "N"))
   if (!is.null(commentPeriod))
     assert_that(commentPeriod) %in% c("O", "C")
   if (!is.null(nresults))
@@ -215,7 +220,7 @@ documents <- function (apikey = NULL, countsOnly = NULL, encoded = NULL,
     assert_that(all(category %in% c("AD", "AEP", "BFS", "LES", "EELS", "EUMM",
                                     "HCFP", "PRE", "ITT")))
   if (!is.null(sortBy)) {
-    assert_that(all(sort_by %in% c("docketId", "docId", "title",
+    assert_that(all(sortBy %in% c("docketId", "docId", "title",
                                    "postedDate", "agency",
                                    "documentType", "submitterName",
                                    "organization")))
@@ -245,7 +250,9 @@ documents <- function (apikey = NULL, countsOnly = NULL, encoded = NULL,
   temp <- GET(base, query = args, timeout(getOption("timeout")), ...)
   temp
   tt <- regs_check(temp)
-  out <- regs_makeDf(tt$documents)
+
+  if (countsOnly) out <- as.data.frame(tt)
+  else out <- regs_makeDf(tt$documents)
   out
 }
 
